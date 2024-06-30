@@ -35,7 +35,7 @@ app.use(passport.initialize());
 const personroutes=require('./Routes/personroute');
 app.use('/person',middleauthen,personroutes);
 const menuroutes=require('./Routes/menuroutes');
-app.use('/menu',middleauthen,menuroutes);
+app.use('/menu',menuroutes);
 
 
 

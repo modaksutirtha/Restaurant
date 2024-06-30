@@ -37,6 +37,19 @@ const personschema= new mongoose.Schema({
         type:String
     }
 })
+personschema.pre('save', async function(next){
+    const person=this;
+    if(!person.isModified('password'))return next();
+    try{
+        const salt=await bcrypt.genSalt(10);
+        const hashedpass=await bcrypt.hash(person.password,salt);
+        person.password=hashedpass;
+        next();
 
+    }
+    catch(err){
+        return next(err);
+    }
+})
 const person=mongoose.model('person',personschema);
 module.exports=person;
