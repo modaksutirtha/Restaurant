@@ -1,15 +1,47 @@
 const express=require("express");
 const router=express.Router();
 const person= require('../models/person');
+const {jwtauthmiddleware,generatetoken}=require('../jwt');
 //..........................................................................................................
-router.post('/',async(req,res)=>{
+router.post('/signup',async(req,res)=>{
 
     try{
         const data= req.body;
         const newperson=new person(data);
         const response= await newperson.save();
         console.log('data saved');
-        res.status(200).json(response);
+
+        const payload = {
+            id: response.id,
+            username: response.username
+        }
+        console.log(JSON.stringify(payload));
+        const token = generatetoken(payload);
+        console.log("Token is : ", token);
+
+        res.status(200).json({response: response, token: token});
+
+    }
+    catch(err){
+        console.log('the eroor is:',err);
+        res.status(500).json({error:'internel server error'});
+
+    }
+})
+
+
+router.post('/login',async(req,res)=>{
+
+    try{
+        const{username,password}=req.body;
+        const user=await person.findOne({username:username});
+        if(!user || !(await user.comparepassword(password)))
+            return res.status(401).json({error:"invalid"});
+        const payload={id:user.id,
+                       username:user.username
+        }
+        const token=generatetoken(payload);
+        res.json({token});
 
     }
     catch(err){
@@ -51,6 +83,21 @@ router.get('/:worktype',async(req,res)=>{
         console.log('the eroor is:',err);
         res.status(500).json({error:'particular ask internel server error'});
 
+    }
+})
+
+router.get('/profile', jwtauthmiddleware, async (req, res) => {
+    try{
+        const userData = req.user;
+        console.log("User Data: ", userData);
+
+        const userId = userData.id;
+        const user = await Person.findById(userId);
+
+        res.status(200).json({user});
+    }catch(err){
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error getting profile' });
     }
 })
 //.........................................................................................................
